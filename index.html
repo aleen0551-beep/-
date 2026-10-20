@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ماكس ماكس تي في - Max Max TV</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --border-color: #dee2e6;
+        }
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --primary-color: #3b82f6;
+            --secondary-color: #a0aec0;
+            --border-color: #2d3748;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: var(--card-bg);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        h1 {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+        }
+        nav button {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 12px;
+            margin-left: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        nav button.active {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border-color: var(--primary-color);
+        }
+        main {
+            flex: 1;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        .player-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+        }
+        .channel-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .channel-btn {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .channel-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        .settings-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ماكس ماكس تي في</h1>
+        <nav>
+            <button class="active" onclick="switchTab('live')">بث مباشر</button>
+            <button onclick="switchTab('sports')">رياضة</button>
+            <button onclick="switchTab('settings')">إعدادات</button>
+        </nav>
+    </header>
+
+    <main>
+        <div id="live" class="section active">
+            <div class="player-container">
+                <video id="videoPlayer" controls autoplay playsinline></video>
+            </div>
+            <div class="channel-list" id="channelList"></div>
+        </div>
+
+        <div id="sports" class="section">
+            <h2>جدول المباريات والرياضة</h2>
+            <p style="margin-top: 10px;">قريباً جداً يتم تحديث النتائج المباشرة.</p>
+        </div>
+
+        <div id="settings" class="section">
+            <div class="settings-card">
+                <h3>إعدادات التطبيق</h3>
+                <p style="margin-top: 10px; margin-bottom: 15px;">التحكم في المظهر:</p>
+                <button onclick="toggleDarkMode()" style="padding: 10px 15px; border-radius: 6px; background: var(--primary-color); color: #fff; border: none; cursor: pointer;">تغيير الوضع الليلي / النهاري</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const channels = [
+            { name: "القناة الرياضية السعودية", url: "https://d15g395i01xzwd.cloudfront.net/v1/master/5d95dca8cb07358e6cdbb0e4a77df3c9fc2d744f/ksa-sport-1/index.m3u8" },
+            { name: "الإخبارية", url: "https://live-ikb.live.media.skoobe.co/smil:ikb.smil/playlist.m3u8" }
+        ];
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function loadChannels() {
+            const list = document.getElementById('channelList');
+            channels.forEach((ch, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'channel-btn';
+                btn.innerText = ch.name;
+                btn.onclick = () => playStream(ch.url);
+                list.appendChild(btn);
+            });
+            if(channels.length > 0) playStream(channels[0].url);
+        }
+
+        function playStream(url) {
+            const video = document.getElementById('videoPlayer');
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.addEventListener('loadedmetadata', () => video.play());
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        loadChannels();
+    </script>
+</body>
+</html>
